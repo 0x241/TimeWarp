@@ -1,10 +1,10 @@
 # TimeWarp
-### Fault-tolerant CLI tool for migrating macOS APFS Time Machine drives to larger disks, with bad-sector rescue via ddrescue and automatic container expansion.
+### Resilient APFS Time Machine Drive Migration & Bad-Sector Recovery for macOS
 
 ```
    ┌──────────────────────┐                     ┌──────────────────────┐
    │  Failing APFS Drive  │                     │   New Target Drive   │
-   │  [■■■■■■■■░░░■■■■■]  │  ─── TimeWarp ───►  │  [■■■■■■■■■■■■■■■■■]  │
+   │  [■■■■■■■■░░░■■■■■]  │  ─── TimeWarp ───►  │  [■■■■■■■■■■■■■■■■■] │
    │    1.4 TB / Bad I/O  │   dd / ddrescue     │     8 TB Expanded    │
    └──────────────────────┘                     └──────────────────────┘
 ```
