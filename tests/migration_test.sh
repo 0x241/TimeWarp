@@ -107,6 +107,8 @@ RC=$?
 set -e
 echo "--- timewarp.sh exit code: $RC; log (blank lines removed) ---"
 grep -v '^[[:space:]]*$' "$WORK/run.log" | tail -n 150
+echo "--- warnings and errors reported by timewarp.sh ---"
+grep -n -e '⚠' -e '\[Error\]' -e '\[Warning\]' -e 'Critical' "$WORK/run.log" || echo "(none)"
 
 untouched() {
   [ "$TARGET_BEFORE" = "$(shasum -a 256 "$WORK/dst.img" | awk '{print $1}')" ] || fail "target was modified"
@@ -136,7 +138,16 @@ case "$MODE" in
     ;;
 esac
 
-[ "$RC" -eq 0 ] || fail "timewarp.sh exited with $RC"
+if [ "$RC" -ne 0 ]; then
+  # diskutil cannot repair the partition map of these tiny disk images (-69771). TimeWarp
+  # rightly reports it as a warning (exit 2). Accept exactly that and nothing else.
+  OTHER_WARNINGS="$(grep -e '⚠' -e '\[Error\]' -e '\[Warning\]' -e 'Critical' "$WORK/run.log" | grep -v 'repairDisk' || true)"
+  if [ "$RC" -eq 2 ] && [ -z "$OTHER_WARNINGS" ] && grep -q -e '-69771' "$WORK/run.log"; then
+    echo "NOTE: exit code 2 accepted - diskutil cannot repair this small disk image (-69771); no other warning was reported."
+  else
+    fail "timewarp.sh exited with $RC"
+  fi
+fi
 if [ "$MODE" = "rescue" ]; then
   grep -q "ddrescue read every block" "$WORK/run.log" || fail "ddrescue path was not used"
 else
