@@ -113,10 +113,10 @@ if [ "$HAS_BAD_SECTORS" -eq 1 ]; then
     fi
   fi
 
-  MAPFILE="$HOME/Desktop/tm_migration_recovery.map"
-  echo "Карта прогресса будет сохранена в: $MAPFILE"
+  RESCUE_MAP="$HOME/Desktop/tm_migration_recovery.map"
+  echo "Карта прогресса будет сохранена в: $RESCUE_MAP"
   echo "Запуск ddrescue..."
-  ddrescue -f -n "$SRC_RDISK" "$DST_RDISK" "$MAPFILE"
+  ddrescue -f -n "$SRC_RDISK" "$DST_RDISK" "$RESCUE_MAP"
 else
   echo -e "${GREEN}Диск в норме. Используется стандартный прямой блочный клон через dd.${NC}"
   echo "Запуск dd (размер блока 64M)..."
