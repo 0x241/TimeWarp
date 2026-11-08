@@ -1,0 +1,37 @@
+name: Tests
+
+on:
+  pull_request:
+    paths:
+      - timewarp.sh
+      - tests/**
+      - .github/workflows/migration-test.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Unit tests
+        run: bash tests/unit_test.sh
+      - name: Safety refusal tests (stubbed commands, no real disks)
+        run: bash tests/refusal_test.sh
+
+  migration:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [dd, rescue, smaller, partition, cancel]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install ddrescue
+        run: brew install ddrescue
+      - name: Migration test on virtual disks (${{ matrix.mode }})
+        run: |
+          chmod +x timewarp.sh tests/migration_test.sh
+          sudo -E tests/migration_test.sh ${{ matrix.mode }}
