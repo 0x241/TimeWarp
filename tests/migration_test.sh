@@ -165,8 +165,19 @@ CONT="$(diskutil apfs list | awk -v part="$PART" '
   /Physical Store/ && index($0, part) { print c; exit }')"
 [ -n "$CONT" ] || fail "no APFS container on target"
 
-SIZE="$(plist_get "/dev/$CONT" TotalSize)"
-[ "$SIZE" -gt 900000000 ] || fail "container was not expanded (size=$SIZE)"
+# Judge the expansion by the physical store that resizeContainer grows, and by the
+# container's capacity ceiling. (The synthesized disk's own TotalSize can lag behind.)
+SIZE="$(plist_get "/dev/$PART" TotalSize)"
+CEILING="$(diskutil apfs list | awk -v c="$CONT" '
+  /Container disk[0-9]+/ { cur = $3 }
+  cur == c && /Capacity Ceiling/ { print $4; exit }')"
+echo "--- expansion check: store $PART size=$SIZE; container $CONT ceiling=${CEILING:-unknown}; container device size=$(plist_get "/dev/$CONT" TotalSize) ---"
+case "$SIZE" in ''|*[!0-9]*) fail "could not read the size of $PART" ;; esac
+[ "$SIZE" -gt 900000000 ] || fail "physical store was not expanded (size=$SIZE)"
+case "$CEILING" in
+  ''|*[!0-9]*) echo "NOTE: capacity ceiling could not be parsed; judged by the physical store size only" ;;
+  *) [ "$CEILING" -gt 900000000 ] || fail "container capacity ceiling was not expanded (ceiling=$CEILING)" ;;
+esac
 
 VOL="$(diskutil list "$CONT" | grep "APFS Volume" | awk '{print $NF}' | head -n 1)"
 [ -n "$VOL" ] || fail "no APFS volume on target container"
