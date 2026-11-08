@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2329  # msg_<lang> functions are called indirectly as msg_${TW_LANG}
 # ==============================================================================
 # TimeWarp - macOS Time Machine Clone & Recovery Tool (APFS)
 # Automated migration from a failing/healthy drive to a new destination drive.
@@ -966,8 +967,9 @@ for D in "$SRC_DISK" "$DST_DISK"; do
     say "$RED" ERR_WHOLE "$D"
     exit 1
   fi
-  if [ "$(plist_get "$D" VirtualOrPhysical)" = "Virtual" ] \
-    || [ -n "$(plist_get "$D" APFSPhysicalStores.0.APFSPhysicalStore)" ]; then
+  # A synthesized APFS container lists its physical stores. (VirtualOrPhysical is no
+  # use here: disk images report "Virtual" although they are ordinary whole disks.)
+  if [ -n "$(plist_get "$D" APFSPhysicalStores.0.APFSPhysicalStore)" ]; then
     say "$RED" ERR_VIRTUAL "$D"
     exit 1
   fi

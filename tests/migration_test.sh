@@ -65,6 +65,10 @@ SRC_DEV="$(attach_raw "$WORK/src.img")" || fail "cannot attach source image"
 DST_DEV="$(attach_raw "$WORK/dst.img")" || fail "cannot attach target image"
 assert_virtual "$SRC_DEV"
 assert_virtual "$DST_DEV"
+echo "--- diskutil view of the attached images (diagnostics) ---"
+for d in "$SRC_DEV" "$DST_DEV"; do
+  echo "$d: WholeDisk=$(plist_get "$d" WholeDisk) VirtualOrPhysical=$(plist_get "$d" VirtualOrPhysical) TotalSize=$(plist_get "$d" TotalSize) Stores=$(plist_get "$d" APFSPhysicalStores.0.APFSPhysicalStore)"
+done
 echo "source=$SRC_DEV target=$DST_DEV mode=$MODE"
 
 # Fixture: APFS volume with random files and a checksum manifest

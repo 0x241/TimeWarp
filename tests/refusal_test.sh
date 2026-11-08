@@ -70,6 +70,7 @@ LIST:/dev/disk9|AllDisksAndPartitions.0.Partitions.1.Content|Apple_APFS
 LIST:/dev/disk0|AllDisksAndPartitions.0.Partitions.0.Content|Apple_APFS
 /dev/disk6|WholeDisk|true
 /dev/disk6|VirtualOrPhysical|Virtual
+/dev/disk6|APFSPhysicalStores.0.APFSPhysicalStore|disk5s2
 /dev/disk6|TotalSize|2000000000000
 /|ParentWholeDisk|disk3
 /System/Volumes/Data|ParentWholeDisk|disk3
@@ -122,7 +123,8 @@ run "answering NO exits with 130"            disk9 disk5 NO 130 "cancelled" ""
 
 # Control: with every check passing, the script goes on to unmount (the stub fails it),
 # and must still not have called dd on a raw device or ddrescue.
-run "control reaches unmount only"           disk9 disk5 YES 1 "Could not unmount" ""
+# the source mimics a disk image, which diskutil reports as "Virtual" although it is a whole disk
+run "control reaches unmount only"           disk9 disk5 YES 1 "Could not unmount" 's#^/dev/disk9|VirtualOrPhysical|Physical#/dev/disk9|VirtualOrPhysical|Virtual#'
 if grep -Eq "ddrescue|of=/dev/rdisk" "$MARK"; then
   echo "FAIL - control scenario wrote to a device"
   FAILS=$((FAILS + 1))
