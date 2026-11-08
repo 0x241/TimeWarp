@@ -288,9 +288,9 @@ msg_zh() {
     ROOT_ERR)       echo "[错误] 必须以管理员身份运行此脚本。" ;;
     ROOT_HINT)      echo "请使用 sudo 运行：sudo %s" ;;
     STEP1)          echo "[1/6] 正在检查终端权限..." ;;
-    FDA_ERR)        echo "[警告] 终端没有“完全磁盘访问权限”(Full Disk Access)。" ;;
+    FDA_ERR)        echo "[警告] 终端没有「完全磁盘访问权限」(Full Disk Access)。" ;;
     FDA_PATH)       echo "请前往：系统设置 -> 隐私与安全性 -> 完全磁盘访问权限" ;;
-    FDA_ADD)        echo "添加并启用“终端”，然后重新运行脚本。" ;;
+    FDA_ADD)        echo "添加并启用「终端」，然后重新运行脚本。" ;;
     FDA_OK)         echo "✓ 已确认可访问块设备。" ;;
     STEP2)          echo "[2/6] 已连接的存储设备：" ;;
     ASK_SRC)        echo "请输入源磁盘标识符（例如 disk1）：" ;;
