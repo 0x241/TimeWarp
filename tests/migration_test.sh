@@ -54,7 +54,7 @@ manifest() {
   (cd "$1/data" && find . -type f | LC_ALL=C sort | xargs shasum -a 256)
 }
 
-DST_SIZE="1g"
+DST_SIZE="2g"
 if [ "$MODE" = "smaller" ]; then
   DST_SIZE="256m"
 fi
@@ -72,7 +72,19 @@ done
 echo "source=$SRC_DEV target=$DST_DEV mode=$MODE"
 
 # Fixture: APFS volume with random files and a checksum manifest
-diskutil partitionDisk "$SRC_DEV" GPT APFS TMSRC 100% >/dev/null
+# Real drives have room in front of the APFS partition for the EFI partition that
+# `diskutil repairDisk` (re)creates. A plain single-partition image has none, which makes
+# repairDisk fail with -69771 ("target disk is too small"), so leave a 200 MB gap.
+if ! diskutil partitionDisk "$SRC_DEV" GPT "Free Space" gap 200m APFS TMSRC R >/dev/null 2>&1; then
+  echo "NOTE: could not create the 200 MB gap; falling back to a single APFS partition"
+  diskutil partitionDisk "$SRC_DEV" GPT APFS TMSRC 100% >/dev/null
+fi
+echo "--- source layout ---"
+diskutil list "$SRC_DEV" || true
+SRC_PART="$(diskutil list "$SRC_DEV" | grep Apple_APFS | awk '{print $NF}' | head -n 1)"
+SRC_STORE_SIZE="$(plist_get "/dev/$SRC_PART" TotalSize)"
+case "$SRC_STORE_SIZE" in ''|*[!0-9]*) fail "could not read the source APFS store size" ;; esac
+MIN_EXPANDED=$((SRC_STORE_SIZE + 300000000))
 SRC_MNT="/Volumes/TMSRC"
 [ -d "$SRC_MNT" ] || fail "source volume not mounted"
 mkdir -p "$SRC_MNT/data/sub"
@@ -139,11 +151,12 @@ case "$MODE" in
 esac
 
 if [ "$RC" -ne 0 ]; then
-  # diskutil cannot repair the partition map of these tiny disk images (-69771). TimeWarp
-  # rightly reports it as a warning (exit 2). Accept exactly that and nothing else.
+  # If diskutil still cannot repair the partition map of the image (-69771), TimeWarp rightly
+  # reports a warning (exit 2). Accept exactly that and nothing else; the expansion check
+  # below then decides whether the migration really worked.
   OTHER_WARNINGS="$(grep -e '⚠' -e '\[Error\]' -e '\[Warning\]' -e 'Critical' "$WORK/run.log" | grep -v 'repairDisk' || true)"
   if [ "$RC" -eq 2 ] && [ -z "$OTHER_WARNINGS" ] && grep -q -e '-69771' "$WORK/run.log"; then
-    echo "NOTE: exit code 2 accepted - diskutil cannot repair this small disk image (-69771); no other warning was reported."
+    echo "NOTE: exit code 2 accepted - diskutil could not repair the image's partition map (-69771); no other warning was reported."
   else
     fail "timewarp.sh exited with $RC"
   fi
@@ -177,17 +190,17 @@ CONT="$(diskutil apfs list | awk -v part="$PART" '
 [ -n "$CONT" ] || fail "no APFS container on target"
 
 # Judge the expansion by the physical store that resizeContainer grows, and by the
-# container's capacity ceiling.
+# container's capacity ceiling; both must be clearly larger than the source's store.
 SIZE="$(plist_get "/dev/$PART" TotalSize)"
 CEILING="$(diskutil apfs list | awk -v c="$CONT" '
   /Container disk[0-9]+/ { cur = $3 }
   cur == c && /Capacity Ceiling/ { print $4; exit }')"
-echo "--- expansion check: store $PART size=$SIZE; container $CONT ceiling=${CEILING:-unknown}; container device size=$(plist_get "/dev/$CONT" TotalSize) ---"
+echo "--- expansion check: source store=$SRC_STORE_SIZE; target store $PART size=$SIZE; container $CONT ceiling=${CEILING:-unknown}; need > $MIN_EXPANDED ---"
 case "$SIZE" in ''|*[!0-9]*) fail "could not read the size of $PART" ;; esac
-[ "$SIZE" -gt 900000000 ] || fail "physical store was not expanded (size=$SIZE)"
+[ "$SIZE" -gt "$MIN_EXPANDED" ] || fail "physical store was not expanded (size=$SIZE, source store=$SRC_STORE_SIZE)"
 case "$CEILING" in
   ''|*[!0-9]*) echo "NOTE: capacity ceiling could not be parsed; judged by the physical store size only" ;;
-  *) [ "$CEILING" -gt 900000000 ] || fail "container capacity ceiling was not expanded (ceiling=$CEILING)" ;;
+  *) [ "$CEILING" -gt "$MIN_EXPANDED" ] || fail "container capacity ceiling was not expanded (ceiling=$CEILING)" ;;
 esac
 
 VOL="$(diskutil list "$CONT" | grep "APFS Volume" | awk '{print $NF}' | head -n 1)"

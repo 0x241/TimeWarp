@@ -92,6 +92,7 @@ msg_en() {
     ERR_NOAPFS)     echo "[Error] %s does not contain an APFS container. TimeWarp only migrates APFS Time Machine disks. Aborting." ;;
     MAP_CONTENT_MISMATCH)echo "[Error] The data on the target disk does not match the recovery map, so it is probably a different physical disk. Refusing to resume. Choose NEW to start over." ;;
     ERR_REPAIR)     echo "⚠ diskutil repairDisk reported an error on the target disk. The partition table may be damaged." ;;
+    ERR_NOGROW)     echo "⚠ diskutil reported success, but the APFS container did not grow. Run 'diskutil repairDisk %s' and then 'diskutil apfs resizeContainer %s 0' by hand." ;;
     DONE)           echo "Migration completed successfully! The drive is ready to use." ;;
   esac
 }
@@ -163,6 +164,7 @@ msg_ru() {
     ERR_NOAPFS)     echo "[Ошибка] %s не содержит контейнера APFS. TimeWarp переносит только диски Time Machine с APFS. Отмена." ;;
     MAP_CONTENT_MISMATCH)echo "[Ошибка] Данные на целевом диске не совпадают с картой восстановления, скорее всего это другой физический диск. Возобновление отклонено. Выберите NEW, чтобы начать заново." ;;
     ERR_REPAIR)     echo "⚠ diskutil repairDisk сообщил об ошибке на целевом диске. Таблица разделов могла быть повреждена." ;;
+    ERR_NOGROW)     echo "⚠ diskutil сообщил об успехе, но контейнер APFS не увеличился. Выполните вручную 'diskutil repairDisk %s', затем 'diskutil apfs resizeContainer %s 0'." ;;
     DONE)           echo "Миграция успешно завершена! Диск готов к использованию." ;;
   esac
 }
@@ -234,6 +236,7 @@ msg_es() {
     ERR_NOAPFS)     echo "[Error] %s no contiene un contenedor APFS. TimeWarp solo migra discos de Time Machine con APFS. Cancelando." ;;
     MAP_CONTENT_MISMATCH)echo "[Error] Los datos del disco de destino no coinciden con el mapa de recuperación, por lo que probablemente es otro disco físico. Se rechaza reanudar. Elige NEW para empezar de nuevo." ;;
     ERR_REPAIR)     echo "⚠ diskutil repairDisk informó de un error en el disco de destino. La tabla de particiones podría estar dañada." ;;
+    ERR_NOGROW)     echo "⚠ diskutil informó de éxito, pero el contenedor APFS no ha crecido. Ejecuta manualmente 'diskutil repairDisk %s' y después 'diskutil apfs resizeContainer %s 0'." ;;
     DONE)           echo "¡Migración completada con éxito! El disco está listo para usarse." ;;
   esac
 }
@@ -305,6 +308,7 @@ msg_de() {
     ERR_NOAPFS)     echo "[Fehler] %s enthält keinen APFS-Container. TimeWarp migriert nur Time-Machine-Laufwerke mit APFS. Abbruch." ;;
     MAP_CONTENT_MISMATCH)echo "[Fehler] Die Daten auf dem Ziellaufwerk passen nicht zur Wiederherstellungskarte, es handelt sich wahrscheinlich um ein anderes physisches Laufwerk. Fortsetzung verweigert. Wähle NEW, um neu zu beginnen." ;;
     ERR_REPAIR)     echo "⚠ diskutil repairDisk meldete einen Fehler auf dem Ziellaufwerk. Die Partitionstabelle könnte beschädigt sein." ;;
+    ERR_NOGROW)     echo "⚠ diskutil meldete Erfolg, aber der APFS-Container ist nicht gewachsen. Führe manuell 'diskutil repairDisk %s' und danach 'diskutil apfs resizeContainer %s 0' aus." ;;
     DONE)           echo "Migration erfolgreich abgeschlossen! Das Laufwerk ist einsatzbereit." ;;
   esac
 }
@@ -376,6 +380,7 @@ msg_fr() {
     ERR_NOAPFS)     echo "[Erreur] %s ne contient pas de conteneur APFS. TimeWarp ne migre que les disques Time Machine en APFS. Annulation." ;;
     MAP_CONTENT_MISMATCH)echo "[Erreur] Les données du disque cible ne correspondent pas à la carte de récupération : il s'agit probablement d'un autre disque physique. Reprise refusée. Choisissez NEW pour recommencer." ;;
     ERR_REPAIR)     echo "⚠ diskutil repairDisk a signalé une erreur sur le disque cible. La table de partitions est peut-être endommagée." ;;
+    ERR_NOGROW)     echo "⚠ diskutil a signalé un succès, mais le conteneur APFS n'a pas grandi. Exécutez manuellement 'diskutil repairDisk %s' puis 'diskutil apfs resizeContainer %s 0'." ;;
     DONE)           echo "Migration terminée avec succès ! Le disque est prêt à l'emploi." ;;
   esac
 }
@@ -447,6 +452,7 @@ msg_pt() {
     ERR_NOAPFS)     echo "[Erro] %s não contém um contêiner APFS. O TimeWarp só migra discos do Time Machine com APFS. Cancelando." ;;
     MAP_CONTENT_MISMATCH)echo "[Erro] Os dados no disco de destino não correspondem ao mapa de recuperação, então provavelmente é outro disco físico. Retomada recusada. Escolha NEW para recomeçar." ;;
     ERR_REPAIR)     echo "⚠ O diskutil repairDisk relatou um erro no disco de destino. A tabela de partições pode estar danificada." ;;
+    ERR_NOGROW)     echo "⚠ O diskutil informou sucesso, mas o contêiner APFS não cresceu. Execute manualmente 'diskutil repairDisk %s' e depois 'diskutil apfs resizeContainer %s 0'." ;;
     DONE)           echo "Migração concluída com sucesso! O disco está pronto para uso." ;;
   esac
 }
@@ -518,6 +524,7 @@ msg_zh() {
     ERR_NOAPFS)     echo "[错误] %s 不包含 APFS 容器。TimeWarp 只迁移使用 APFS 的时间机器磁盘。已取消。" ;;
     MAP_CONTENT_MISMATCH)echo "[错误] 目标磁盘上的数据与恢复映射文件不一致，很可能是另一块物理磁盘。拒绝继续。请选择 NEW 重新开始。" ;;
     ERR_REPAIR)     echo "⚠ diskutil repairDisk 在目标磁盘上报告了错误。分区表可能已损坏。" ;;
+    ERR_NOGROW)     echo "⚠ diskutil 报告成功，但 APFS 容器并未增大。请手动运行 'diskutil repairDisk %s'，然后运行 'diskutil apfs resizeContainer %s 0'。" ;;
     DONE)           echo "迁移成功完成！磁盘已可使用。" ;;
   esac
 }
@@ -1121,8 +1128,22 @@ APFS_PART=$(diskutil list "$DST_DISK" | grep "Apple_APFS" | awk '{print $NF}' | 
 if [ -n "$APFS_PART" ]; then
   say "$GREEN" APFS_FOUND "$APFS_PART"
   say "$NC" RESIZING
+  APFS_SIZE_BEFORE="$(plist_get "/dev/$APFS_PART" TotalSize)"
   if diskutil apfs resizeContainer "$APFS_PART" 0; then
-    say "$GREEN" RESIZED
+    # Do not trust the exit code alone: check that the physical store really grew
+    APFS_SIZE_AFTER="$(plist_get "/dev/$APFS_PART" TotalSize)"
+    case "$APFS_SIZE_BEFORE$APFS_SIZE_AFTER" in
+      ''|*[!0-9]*) APFS_GREW=unknown ;;
+      *) if [ "$APFS_SIZE_AFTER" -gt "$APFS_SIZE_BEFORE" ]; then APFS_GREW=yes; else APFS_GREW=no; fi ;;
+    esac
+    if [ "$APFS_GREW" = "no" ] && [ "$DST_BYTES" -gt "$SRC_BYTES" ]; then
+      say "$YELLOW" ERR_NOGROW "$DST_DISK" "$APFS_PART"
+      if [ "$RESULT" = "SUCCESS" ]; then
+        RESULT="PARTIAL"
+      fi
+    else
+      say "$GREEN" RESIZED
+    fi
   else
     say "$RED" ERR_RESIZE
     RESULT="FAILED"
