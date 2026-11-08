@@ -105,7 +105,8 @@ printf '%s\n%s\n%s\n' "$SRC_ARG" "$DST_ARG" "$CONFIRM_ANSWER" \
   | "$ROOT/timewarp.sh" > "$WORK/run.log" 2>&1
 RC=$?
 set -e
-tail -n 25 "$WORK/run.log"
+echo "--- timewarp.sh exit code: $RC; log (blank lines removed) ---"
+grep -v '^[[:space:]]*$' "$WORK/run.log" | tail -n 150
 
 untouched() {
   [ "$TARGET_BEFORE" = "$(shasum -a 256 "$WORK/dst.img" | awk '{print $1}')" ] || fail "target was modified"
