@@ -1,0 +1,46 @@
+# ddrescue / recovery artifacts (may reveal disk layout)
+*.map
+*.mapfile
+*.log
+recovery.map
+tm_migration_recovery.map
+
+# Disk images and dumps
+*.img
+*.dmg
+*.sparsebundle
+*.sparseimage
+*.iso
+*.bin
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.TemporaryItems
+
+# Secrets / credentials
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.keychain
+*.keychain-db
+id_rsa*
+id_ed25519*
+secrets/
+credentials*
+
+# Editors / temp
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.tmp
+*.bak
