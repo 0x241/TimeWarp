@@ -158,6 +158,17 @@ fi
 hdiutil detach -force "$SRC_DEV" >/dev/null 2>&1 || true
 SRC_DEV=""
 
+# Re-attach the target image, like plugging the new drive in again: judge what was
+# persisted on "disk", not what the kernel had cached while TimeWarp was running.
+hdiutil detach -force "$DST_DEV" >/dev/null 2>&1 || fail "cannot detach the target image"
+DST_DEV=""
+sleep 2
+DST_DEV="$(attach_raw "$WORK/dst.img")" || fail "cannot re-attach the target image"
+assert_virtual "$DST_DEV"
+echo "--- after re-attaching the target: $DST_DEV ---"
+diskutil list "$DST_DEV" || true
+diskutil apfs list | grep -E "Container disk|Physical Store|Capacity Ceiling" || true
+
 PART="$(diskutil list "$DST_DEV" | grep Apple_APFS | awk '{print $NF}' | head -n 1)"
 [ -n "$PART" ] || fail "no APFS partition on target"
 CONT="$(diskutil apfs list | awk -v part="$PART" '
@@ -166,7 +177,7 @@ CONT="$(diskutil apfs list | awk -v part="$PART" '
 [ -n "$CONT" ] || fail "no APFS container on target"
 
 # Judge the expansion by the physical store that resizeContainer grows, and by the
-# container's capacity ceiling. (The synthesized disk's own TotalSize can lag behind.)
+# container's capacity ceiling.
 SIZE="$(plist_get "/dev/$PART" TotalSize)"
 CEILING="$(diskutil apfs list | awk -v c="$CONT" '
   /Container disk[0-9]+/ { cur = $3 }
